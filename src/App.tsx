@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   Sparkles, 
-  History, 
   Trash2, 
   Download, 
   Palette,
@@ -14,13 +12,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Quote,
-  ArrowDown
+  ArrowDown,
+  Maximize2,
+  X,
+  Copy,
+  Check
 } from 'lucide-react';
 import { MoodSketch, GenerationStatus, PredefinedMoods, ART_STYLES } from './types';
 import { refineMoodToPrompt, generateMoodSketch } from './services/pollinationsService';
 import MoodChip from './components/MoodChip';
 
-const MAX_GENERATIONS = 6;
+const MAX_GENERATIONS = 3;
 
 const ARTIST_QUOTES = [
   { text: "Art is the lie that enables us to realize the truth.", author: "Pablo Picasso" },
@@ -30,12 +32,28 @@ const ARTIST_QUOTES = [
   { text: "Color is the keyboard, the eyes are the hammers, the soul is the piano with many strings.", author: "Wassily Kandinsky" }
 ];
 
+const PLACEHOLDER_PROMPTS = [
+  "Dream here...",
+  "Your canvas awaits",
+  "Visualize the void",
+  "Awaiting inspiration",
+  "Silence speaks",
+  "Echoes of mood",
+  "Capture the unseen",
+  "Space for soul"
+];
+
 const App: React.FC = () => {
   const [mood, setMood] = useState('');
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState(ART_STYLES[0].id);
   const [sketches, setSketches] = useState<MoodSketch[]>([]);
   const [quoteIndex, setQuoteIndex] = useState(0);
+  
+  // New State for Lightbox and Copy Feedback
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   const [status, setStatus] = useState<GenerationStatus>({
     loading: false,
     error: null,
@@ -64,7 +82,7 @@ const App: React.FC = () => {
     }
 
     if (status.count >= MAX_GENERATIONS) {
-      setStatus(prev => ({ ...prev, error: "You've reached your limit of 6 mood sketches." }));
+      setStatus(prev => ({ ...prev, error: "You've reached your limit of 3 mood sketches." }));
       return;
     }
 
@@ -72,7 +90,11 @@ const App: React.FC = () => {
 
     try {
       const styleName = ART_STYLES.find(s => s.id === selectedStyle)?.name || 'Abstract';
+      
+      // 1. Get the prompt
       const { prompt: refined, colors } = await refineMoodToPrompt(finalMood, styleName);
+      
+      // 2. Get the Blob URL
       const imageUrl = await generateMoodSketch(refined, styleName);
 
       const newSketch: MoodSketch = {
@@ -93,7 +115,7 @@ const App: React.FC = () => {
       // Scroll to gallery after generation
       setTimeout(() => {
         galleryRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 500);
+      }, 100);
     } catch (err: any) {
       setStatus(prev => ({ 
         ...prev, 
@@ -102,6 +124,37 @@ const App: React.FC = () => {
       }));
     }
   };
+
+  const EmptySlot: React.FC<{ index: number }> = ({ index }) => {
+  const [textIndex, setTextIndex] = useState(Math.floor(Math.random() * PLACEHOLDER_PROMPTS.length));
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    // Offset the timer based on index so they don't pulse in sync (robotic)
+    const timer = setInterval(() => {
+      setFade(false); // Fade out
+      setTimeout(() => {
+        setTextIndex((prev) => (prev + 1) % PLACEHOLDER_PROMPTS.length);
+        setFade(true); // Fade in
+      }, 500); // Wait for fade out to finish
+    }, 4000 + (index * 500)); // Staggered timing
+
+    return () => clearInterval(timer);
+  }, [index]);
+
+return (
+
+    <div className="aspect-square bg-white/[0.02] border border-white/5 border-dashed rounded-[2rem] flex flex-col items-center justify-center text-gray-500 space-y-4 group hover:bg-white/[0.04] transition-colors cursor-default">
+      
+      <Palette className="w-12 h-12 opacity-20 group-hover:opacity-40 transition-opacity duration-700" />
+      
+
+      <p className={`text-xs uppercase tracking-widest font-bold transition-opacity duration-500 ${fade ? 'opacity-50' : 'opacity-0'}`}>
+        {PLACEHOLDER_PROMPTS[textIndex]}
+      </p>
+    </div>
+  );
+};
 
   const deleteSketch = (id: string) => setSketches(prev => prev.filter(s => s.id !== id));
 
@@ -116,11 +169,28 @@ const App: React.FC = () => {
     } catch (err) { alert("Sharing failed. Please download the image."); }
   };
 
+  const copyPrompt = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const nextQuote = () => setQuoteIndex((prev) => (prev + 1) % ARTIST_QUOTES.length);
   const prevQuote = () => setQuoteIndex((prev) => (prev - 1 + ARTIST_QUOTES.length) % ARTIST_QUOTES.length);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
+      
+      {/* LIGHTBOX MODAL */}
+      {lightboxImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4" onClick={() => setLightboxImage(null)}>
+          <button className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors">
+            <X className="w-8 h-8" />
+          </button>
+          <img src={lightboxImage} alt="Full Screen" className="max-w-full max-h-[90vh] rounded-lg shadow-2xl border border-white/10" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
+
       {/* Cinematic Hero Section */}
       <section className="relative h-screen flex flex-col items-center justify-center p-6 overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -138,7 +208,7 @@ const App: React.FC = () => {
           </div>
         </nav>
 
-        <div className="relative z-10 text-center max-w-4xl space-y-15">
+        <div className="relative z-10 text-center max-w-4xl space-y-12">
           <div className="space-y-6">
             <h2 className="text-6xl md:text-8xl font-serif leading-none tracking-tight">
               Paint your <span className="italic text-gray-500 underline decoration-gray-800">emotions</span>
@@ -240,67 +310,72 @@ const App: React.FC = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {sketches.length === 0 && !status.loading ? (
-            // Placeholder Cards
-            [1, 2, 3].map((i) => (
-              <div key={i} className="aspect-square bg-white/[0.02] border border-white/5 rounded-[2rem] flex flex-col items-center justify-center text-gray-800 space-y-4">
-                <Palette className="w-12 h-12 opacity-5" />
-                <p className="text-xs uppercase tracking-widest opacity-20 font-bold">Awaiting Expression</p>
+          
+          {/* 1. Render Existing Sketches */}
+          {sketches.map((sketch) => (
+            <div key={sketch.id} className="group bg-white/5 rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-700 flex flex-col">
+              <div className="relative aspect-square overflow-hidden bg-black cursor-pointer" onClick={() => setLightboxImage(sketch.imageUrl)}>
+                <img src={sketch.imageUrl} alt={sketch.originalMood} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-3 backdrop-blur-[2px]" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={() => setLightboxImage(sketch.imageUrl)} className="p-3 bg-white/10 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10" title="View Fullscreen">
+                    <Maximize2 className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => handleShare(sketch)} className="p-3 bg-white/10 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10" title="Share">
+                    <Share2 className="w-5 h-5" />
+                  </button>
+                  <a href={sketch.imageUrl} download={`sketch-my-mood-${sketch.timestamp}.png`} className="p-3 bg-white/10 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10" title="Download">
+                    <Download className="w-5 h-5" />
+                  </a>
+                  <button onClick={() => deleteSketch(sketch.id)} className="p-3 bg-red-500/20 hover:bg-red-500 text-white rounded-full transition-all border border-red-500/20" title="Delete">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            ))
-          ) : (
-            <>
-              {status.loading && (
-                <div className="aspect-square bg-white/[0.05] border border-white/20 rounded-[2rem] overflow-hidden animate-pulse flex flex-col items-center justify-center p-12 space-y-6">
-                  <Loader2 className="w-12 h-12 text-white/20 animate-spin" />
-                  <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                    <div className="h-full bg-white w-full animate-[progress_3s_infinite] origin-left"></div>
+              <div className="p-8 space-y-5 flex-1 flex flex-col">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    <p className="text-lg font-serif italic text-gray-200">"{sketch.originalMood}"</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{sketch.style} Movement</p>
                   </div>
-                  <p className="text-xs text-center text-gray-500 uppercase tracking-widest font-bold">Developing...</p>
                 </div>
-              )}
-              {sketches.map((sketch) => (
-                <div key={sketch.id} className="group bg-white/5 rounded-[2.5rem] overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-700">
-                  <div className="relative aspect-square overflow-hidden bg-black">
-                    <img src={sketch.imageUrl} alt={sketch.originalMood} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" />
-                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-4">
-                      <button onClick={() => handleShare(sketch)} className="p-4 bg-white/10 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10">
-                        <Share2 className="w-6 h-6" />
-                      </button>
-                      <a href={sketch.imageUrl} download className="p-4 bg-white/10 hover:bg-white text-white hover:text-black rounded-full transition-all border border-white/10">
-                        <Download className="w-6 h-6" />
-                      </a>
-                      <button onClick={() => deleteSketch(sketch.id)} className="p-4 bg-red-500/20 hover:bg-red-500 text-white rounded-full transition-all border border-red-500/20">
-                        <Trash2 className="w-6 h-6" />
-                      </button>
-                    </div>
+                <div className="space-y-3">
+                  <p className="text-[10px] text-gray-600 uppercase tracking-[0.2em] font-bold">Emotional DNA</p>
+                  <div className="flex h-1.5 w-full rounded-full overflow-hidden">
+                    {sketch.colors.map((color, idx) => (
+                      <div key={idx} className="h-full flex-1 transition-transform hover:scale-y-[3] cursor-help" style={{ backgroundColor: color }} title={color} />
+                    ))}
                   </div>
-                  <div className="p-8 space-y-5">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <p className="text-lg font-serif italic text-gray-200">"{sketch.originalMood}"</p>
-                        <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{sketch.style} Movement</p>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <p className="text-[10px] text-gray-600 uppercase tracking-[0.2em] font-bold">Emotional DNA</p>
-                      <div className="flex h-1.5 w-full rounded-full overflow-hidden">
-                        {sketch.colors.map((color, idx) => (
-                          <div key={idx} className="h-full flex-1 transition-transform hover:scale-y-[3] cursor-help" style={{ backgroundColor: color }} title={color} />
-                        ))}
-                      </div>
-                    </div>
+                </div>
+                <div className="group/text relative">
+                  <p className="text-xs text-gray-500 italic leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-500">
+                    {sketch.refinedPrompt}
+                  </p>
+                  <button onClick={() => copyPrompt(sketch.refinedPrompt, sketch.id)} className="absolute -right-2 -top-2 p-1.5 text-gray-600 hover:text-white transition-colors opacity-0 group-hover/text:opacity-100" title="Copy Prompt">
+                    {copiedId === sketch.id ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
 
-                    <p className="text-xs text-gray-500 italic leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all duration-500">
-                      {sketch.refinedPrompt}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </>
+          {/* 2. Render Loading Card (if currently generating) */}
+          {status.loading && (
+            <div className="aspect-square bg-white/[0.05] border border-white/20 rounded-[2rem] overflow-hidden animate-pulse flex flex-col items-center justify-center p-12 space-y-6">
+              <Loader2 className="w-12 h-12 text-white/20 animate-spin" />
+              <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-white w-full animate-[progress_3s_infinite] origin-left"></div>
+              </div>
+              <p className="text-xs text-center text-gray-500 uppercase tracking-widest font-bold">Developing...</p>
+            </div>
           )}
+{/* 3. Render Living Placeholders */}
+          {[...Array(Math.max(0, MAX_GENERATIONS - sketches.length - (status.loading ? 1 : 0)))].map((_, i) => (
+            <EmptySlot key={`empty-${i}`} index={i} />
+          ))}
+        
         </div>
+      
+      
       </section>
 
       {/* Features & Artist Quotes Section */}
@@ -360,14 +435,12 @@ const App: React.FC = () => {
         </div>
       </section>
 
-
-
       <footer className="py-24 border-t border-white/5 text-center space-y-6">
         <div className="flex items-center justify-center gap-2 opacity-50">
           <Palette className="w-5 h-5" />
           <p className="text-sm font-serif italic">Every artist was first an amateur.</p>
         </div>
-        <p className="text-[10px] uppercase tracking-[0.4em] text-gray-600 font-bold">© 2025 SketchMyMood • Powered by pollinations.ai/</p>
+        <p className="text-[10px] uppercase tracking-[0.4em] text-gray-600 font-bold">© 2025 SketchMyMood • Powered by pollinations.ai</p>
       </footer>
 
       <style>{`
