@@ -1,6 +1,6 @@
 {
   "name": "Sketch My Mood",
-  "description": "An AI-powered mood-to-art generator that transforms your current feelings into stunning visual sketches using Gemini's advanced image generation capabilities.",
+  "description": "An AI-powered mood-to-art generator that transforms your current feelings into stunning visual sketches using Pollinations AI and advanced image generation capabilities.",
   "requestFramePermissions": [
     "camera"
   ]

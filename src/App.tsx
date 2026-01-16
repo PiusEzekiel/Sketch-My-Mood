@@ -17,10 +17,10 @@ import {
   ArrowDown
 } from 'lucide-react';
 import { MoodSketch, GenerationStatus, PredefinedMoods, ART_STYLES } from './types';
-import { refineMoodToPrompt, generateMoodSketch } from './services/geminiService';
+import { refineMoodToPrompt, generateMoodSketch } from './services/pollinationsService';
 import MoodChip from './components/MoodChip';
 
-const MAX_GENERATIONS = 5;
+const MAX_GENERATIONS = 6;
 
 const ARTIST_QUOTES = [
   { text: "Art is the lie that enables us to realize the truth.", author: "Pablo Picasso" },
@@ -64,7 +64,7 @@ const App: React.FC = () => {
     }
 
     if (status.count >= MAX_GENERATIONS) {
-      setStatus(prev => ({ ...prev, error: "You've reached your limit of 5 mood sketches." }));
+      setStatus(prev => ({ ...prev, error: "You've reached your limit of 6 mood sketches." }));
       return;
     }
 
@@ -134,17 +134,17 @@ const App: React.FC = () => {
             <h1 className="text-2xl font-serif font-bold tracking-tight">SketchMyMood</h1>
           </div>
           <div className="text-xs text-gray-400 font-bold tracking-[0.2em] uppercase bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-            {MAX_GENERATIONS - status.count} attempts remaining
+            {MAX_GENERATIONS - status.count} attempts left
           </div>
         </nav>
 
-        <div className="relative z-10 text-center max-w-4xl space-y-12">
+        <div className="relative z-10 text-center max-w-4xl space-y-15">
           <div className="space-y-6">
             <h2 className="text-6xl md:text-8xl font-serif leading-none tracking-tight">
               Paint your <span className="italic text-gray-500 underline decoration-gray-800">emotions</span>
             </h2>
             <p className="text-xl text-gray-400 font-light max-w-2xl mx-auto leading-relaxed">
-              An AI-driven sanctuary where your feelings become visual masterpieces. Express your soul, select your style, and let Gemini bring your mood to life.
+              An AI-driven sanctuary where your feelings become visual masterpieces.
             </p>
           </div>
 
@@ -222,65 +222,8 @@ const App: React.FC = () => {
         </button>
       </section>
 
-      {/* Features & Artist Quotes Section */}
-      <section className="py-32 bg-[#080808] border-y border-white/5">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-24 items-center">
-            <div className="space-y-12">
-              <div className="space-y-4">
-                <h3 className="text-xs uppercase tracking-[0.3em] text-gray-500 font-bold">The Experience</h3>
-                <h2 className="text-5xl font-serif">A dialogue between <br/><span className="italic text-gray-400">Emotion & AI</span></h2>
-              </div>
-              
-              <div className="grid gap-8">
-                <div className="flex gap-6 group">
-                  <div className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
-                    <Quote className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-xl font-medium">Poetic Refinement</h4>
-                    <p className="text-gray-500 leading-relaxed">Our system doesn't just generate images; it understands context, refining your mood into complex poetic prompts.</p>
-                  </div>
-                </div>
-                <div className="flex gap-6 group">
-                  <div className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
-                    <Palette className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-xl font-medium">Emotional DNA</h4>
-                    <p className="text-gray-500 leading-relaxed">Each sketch extracts a unique color palette—the visual fingerprint of your emotional state at this moment.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative bg-white/5 border border-white/10 p-16 rounded-[3rem] text-center space-y-8 overflow-hidden">
-               <div className="absolute top-0 left-0 p-8 opacity-10">
-                 <Quote className="w-32 h-32" />
-               </div>
-               <div className="relative z-10 space-y-6">
-                  <p className="text-3xl font-serif italic text-gray-200 leading-relaxed min-h-[140px] flex items-center justify-center">
-                    "{ARTIST_QUOTES[quoteIndex].text}"
-                  </p>
-                  <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">
-                    — {ARTIST_QUOTES[quoteIndex].author}
-                  </p>
-                  <div className="flex justify-center gap-4 pt-8">
-                    <button onClick={prevQuote} className="p-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors">
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button onClick={nextQuote} className="p-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors">
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
-               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Gallery Section */}
-      <section ref={galleryRef} className="py-32 px-6 max-w-7xl mx-auto space-y-16">
+      <section ref={galleryRef} className="py-32 px-6 max-w-7xl mx-auto space-y-10">
         <div className="flex flex-col md:flex-row justify-between items-end gap-6">
           <div className="space-y-4">
             <h3 className="text-xs uppercase tracking-[0.3em] text-gray-500 font-bold">The Archive</h3>
@@ -360,12 +303,71 @@ const App: React.FC = () => {
         </div>
       </section>
 
+      {/* Features & Artist Quotes Section */}
+      <section className="py-32 bg-[#080808] border-y border-white/5">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-24 items-center">
+            <div className="space-y-12">
+              <div className="space-y-4">
+                <h3 className="text-xs uppercase tracking-[0.3em] text-gray-500 font-bold">The Experience</h3>
+                <h2 className="text-5xl font-serif">A dialogue between <br/><span className="italic text-gray-400">Emotion & AI</span></h2>
+              </div>
+              
+              <div className="grid gap-8">
+                <div className="flex gap-6 group">
+                  <div className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                    <Quote className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-xl font-medium">Poetic Refinement</h4>
+                    <p className="text-gray-500 leading-relaxed">Our system doesn't just generate images; it understands context, refining your mood into complex poetic prompts.</p>
+                  </div>
+                </div>
+                <div className="flex gap-6 group">
+                  <div className="w-12 h-12 shrink-0 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all">
+                    <Palette className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-xl font-medium">Emotional DNA</h4>
+                    <p className="text-gray-500 leading-relaxed">Each sketch extracts a unique color palette—the visual fingerprint of your emotional state at this moment.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative bg-white/5 border border-white/10 p-16 rounded-[3rem] text-center space-y-8 overflow-hidden">
+               <div className="absolute top-0 left-0 p-8 opacity-10">
+                 <Quote className="w-32 h-32" />
+               </div>
+               <div className="relative z-10 space-y-6">
+                  <p className="text-3xl font-serif italic text-gray-200 leading-relaxed min-h-[140px] flex items-center justify-center">
+                    "{ARTIST_QUOTES[quoteIndex].text}"
+                  </p>
+                  <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">
+                    — {ARTIST_QUOTES[quoteIndex].author}
+                  </p>
+                  <div className="flex justify-center gap-4 pt-8">
+                    <button onClick={prevQuote} className="p-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors">
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button onClick={nextQuote} className="p-3 bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-colors">
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
       <footer className="py-24 border-t border-white/5 text-center space-y-6">
         <div className="flex items-center justify-center gap-2 opacity-50">
           <Palette className="w-5 h-5" />
           <p className="text-sm font-serif italic">Every artist was first an amateur.</p>
         </div>
-        <p className="text-[10px] uppercase tracking-[0.4em] text-gray-600 font-bold">© 2025 SketchMyMood • Powered by Gemini</p>
+        <p className="text-[10px] uppercase tracking-[0.4em] text-gray-600 font-bold">© 2025 SketchMyMood • Powered by pollinations.ai/</p>
       </footer>
 
       <style>{`
