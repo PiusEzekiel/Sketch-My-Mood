@@ -153,6 +153,14 @@ const App: React.FC = () => {
     } catch (err) { alert("Sharing failed. Please download the image."); }
   };
 
+  const handleReset = () => {
+    if (window.confirm("Wipe the archive and reset your attempts?")) {
+      setSketches([]); // Clear visual gallery
+      setStatus(prev => ({ ...prev, count: 0, error: null })); // Reset counter logic
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Optional: Scroll up
+    }
+  };
+
   const copyPrompt = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
@@ -187,8 +195,15 @@ const App: React.FC = () => {
             <Palette className="w-8 h-8 text-white" />
             <h1 className="text-2xl font-serif font-bold tracking-tight">SketchMyMood</h1>
           </div>
-          <div className="text-xs text-gray-400 font-bold tracking-[0.2em] uppercase bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-            {MAX_GENERATIONS - status.count} attempts left
+          <div className={`text-xs font-bold tracking-[0.2em] uppercase px-4 py-2 rounded-full border backdrop-blur-md transition-all ${
+            status.count >= MAX_GENERATIONS 
+              ? 'text-red-300 border-red-500/30 bg-red-500/10 shadow-[0_0_15px_rgba(239,68,68,0.2)]' 
+              : 'text-gray-400 border-white/10 bg-white/5'
+          }`}>
+            {status.count >= MAX_GENERATIONS 
+              ? "Reset gallery for more attempts" 
+              : `${MAX_GENERATIONS - status.count} attempts left`
+            }
           </div>
         </nav>
 
@@ -285,14 +300,16 @@ const App: React.FC = () => {
             {/* CHANGED: Text size responsive */}
             <h2 className="text-3xl md:text-5xl font-serif italic">Mood Gallery</h2>
           </div>
+          
           {sketches.length > 0 && (
             <button 
-              onClick={() => { if(window.confirm("Wipe the archive?")) setSketches([]); }}
+              onClick={handleReset}
               className="text-xs text-gray-600 hover:text-red-400 flex items-center gap-2 uppercase tracking-widest font-bold transition-colors"
             >
               <Trash2 className="w-4 h-4" /> Reset Collection
             </button>
           )}
+        
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
