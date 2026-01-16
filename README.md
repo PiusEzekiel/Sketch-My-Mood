@@ -66,7 +66,7 @@ Unlike standard image generators, this app focuses on **emotional intelligence**
 
 1.  **Clone the repo**
     ```sh
-    git clone [https://github.com/yourusername/Sketch-My-Mood.git](https://github.com/yourusername/Sketch-My-Mood.git)
+    git clone the repo
     cd Sketch-My-Mood
     ```
 
